@@ -10,9 +10,9 @@ RUN apt-get update && apt-get install -y \
     xz-utils \
     libncursesw5 \
     software-properties-common \
-    cmake \ 
     make \
     git \
+    gnupg \
     && add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update \
     && apt-get install -y python3.8 python3.8-distutils \
@@ -20,6 +20,26 @@ RUN apt-get update && apt-get install -y \
 
 # Set Python 3.8 as the default python3
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
+
+# Install graph-cli via pip
+RUN apt-get update \
+    && apt-get install -y python3-pip \
+    && pip3 install graph-cli \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install latest CMake from Kitware
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal main" > /etc/apt/sources.list.d/kitware.list \
+    && apt-get update \
+    && apt-get install -y cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install latest g++ (C++23 capable)
+RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test \
+    && apt-get update \
+    && apt-get install -y g++-13 \
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Download and extract arm-none-eabi-gcc
 RUN wget -O arm-gnu-toolchain.tar.xz "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz?rev=e434b9ea4afc4ed7998329566b764309&hash=CA590209F5774EE1C96E6450E14A3E26" \
@@ -54,4 +74,3 @@ RUN bazel version
 
 # Keep the container running
 CMD ["sleep", "infinity"]
-
